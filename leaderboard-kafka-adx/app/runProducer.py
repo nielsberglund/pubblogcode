@@ -8,16 +8,8 @@ import random
 import time
 
 class Produce:
-    doLoop = False
-    numberLoops = None
-    minLatency = None
-    maxLatency = None
-    topic = None
-    producer = None
-    numMsg = 0
-    nthMsg = None
     
-    def __init__(self, doLoop, numberLoops, minLatency, maxLatency, topic, print_nth_msg):
+    def __init__(self, doLoop, numberLoops, minLatency, maxLatency, bootstrap, topic, print_nth_msg):
         self.name = "Produce"
         self.doLoop = doLoop
         self.numberLoops = numberLoops
@@ -25,13 +17,15 @@ class Produce:
         self.maxLatency = maxLatency
         self.topic = topic
         self.nthMsg = print_nth_msg
+        self.bootstrap = bootstrap
+        self.numMsg = 0
 
     def intializeKafka(self) :
         bootstrap_servers = os.getenv("BOOTSTRAP_SERVERS")
 
         if bootstrap_servers is None:
-            print("BOOTSTRAP_SERVERS environment variable not set. Defaulting to localhost:9092.")
-            bootstrap_servers = "localhost:9092"
+            print("BOOTSTRAP_SERVERS environment variable not set. Using commandline argument for bootstrap server.")
+            bootstrap_servers = self.bootstrap
         
         print("Bootstrap servers: " + bootstrap_servers)
         
@@ -88,26 +82,30 @@ def main():
     maxLatency = None
     topic = None
     nthMsg = None
+    bootstrap = None
+
     parser = argparse.ArgumentParser(description='Generate and publish events to Kafka.')
-    parser.add_argument('-t', '--topic', help='Topic to publish to', required=True)
+    parser.add_argument('-t', '--topic', help='Topic to publish to', required=True, metavar="")
+    parser.add_argument('-b', '--bootstrap', help='Bootstrap server. Defaults to localhost:9092.', required=False, metavar="")
     parser.add_argument('-l', '--loop', default=False, action="store_true", help='If set, then run in a loop.', required=False)
-    parser.add_argument('-n', '--number_loops', help='When running in a loop, number of events to generate.', required=False)
-    parser.add_argument('-m', '--min_latency', help='When running in a loop, minimum latency. Defaults to 500 ms.', required=False)
-    parser.add_argument('-x', '--max_latency', help='When running in a loop, maximum latency. Defaults to 1000 ms.', required=False)
-    parser.add_argument('-p', '--print_nth_msg', help='When running in a loop, print every nth msg.', required=False)
+    parser.add_argument('-e', '--events', help='When running in a loop, number of events to generate.', required=False, metavar="")
+    parser.add_argument('-m', '--min_latency', help='When running in a loop, minimum latency. Defaults to 500 ms.', required=False, metavar="")
+    parser.add_argument('-x', '--max_latency', help='When running in a loop, maximum latency. Defaults to 1000 ms.', required=False, metavar="")
+    parser.add_argument('-p', '--print_n_msg', help='When running in a loop, print every nth msg. Defaults to very 100th.', required=False, metavar="")
 
     args = parser.parse_args()
     topic = args.topic
     doLoop = args.loop
+    bootstrap = "localhost:9092" if args.bootstrap is None else args.bootstrap
     if doLoop:
-        numberLoops = 10 if args.number_loops is None else args.number_loops
+        numberLoops = 10 if args.events is None else args.events
         minLatency = 500 if args.min_latency is None else args.min_latency    
         maxLatency = 1000 if args.max_latency is None else args.max_latency
-        nthMsg = 100 if args.print_nth_msg is None else args.print_nth_msg
+        nthMsg = 100 if args.print_n_msg is None else args.print_n_msg
         print("Running in a loop. Number loops: " + str(numberLoops) + " Min latency: " + str(minLatency) + " Max latency: " + str(maxLatency) + " Printing every " + str(nthMsg) + ":th message.")
         
     input("We are ready, press the enter key to continue")
-    p = Produce(doLoop, numberLoops, minLatency, maxLatency, topic, nthMsg)
+    p = Produce(doLoop, numberLoops, minLatency, maxLatency, bootstrap, topic, nthMsg)
     
     p.intializeKafka()
 

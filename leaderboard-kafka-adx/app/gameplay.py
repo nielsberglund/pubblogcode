@@ -12,15 +12,15 @@ maxWin = 500
 minWinIndicator = 1
 maxWinIndicator = 12
 winModulu = 3
-minScore = 10
-maxScore = 300
+minStake = 10
+maxStake = 300
 
 
 def generateGamePlay() :
   win = 0
   playerId = random.randint(minPlayerId, maxPlayerId)
   gameId = random.randint(minGameId, maxGameId)
-  score = random.randint(minScore, maxScore)
+  stake = random.randint(minStake, maxStake)
   eventTime = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f")
   if((random.randint(minWinIndicator, maxWinIndicator) %  winModulu) == 0 ):
     win = random.randint(minWin, maxWin)
@@ -29,7 +29,7 @@ def generateGamePlay() :
   retVal = {
     "playerId": playerId,
     "gameId": gameId,
-    "score": score,
+    "stake": stake,
     "win": win,
     "eventTime": eventTime
   }

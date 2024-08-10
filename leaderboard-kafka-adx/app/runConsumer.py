@@ -5,21 +5,19 @@ import argparse
 
 class Consume :
     
-    consumer = None
-    msgCount = 0
-    nthMsg = None
-
-    def __init__(self, topic, print_nth_msg):
+    def __init__(self, bootstrap, topic, print_nth_msg):
         self.name = "Consume"
         self.topic = topic
         self.nthMsg = print_nth_msg
+        self.bootstrap = bootstrap
+        self.msgCount = 0
 
     def intializeKafka(self) :
         bootstrap_servers = os.getenv("BOOTSTRAP_SERVERS")
 
         if bootstrap_servers is None:
-            print("BOOTSTRAP_SERVERS environment variable not set. Defaulting to localhost:9092.")
-            bootstrap_servers = "localhost:9092"
+            print("BOOTSTRAP_SERVERS environment variable not set. Using commandline argument for bootstrap server.")
+            bootstrap_servers = self.bootstrap
         
         print("Bootstrap servers: " + bootstrap_servers)
 
@@ -57,15 +55,17 @@ def main():
     topic = None
     nthMsg = None
     parser = argparse.ArgumentParser(description='Consume events from Kafka.')
-    parser.add_argument('-t', '--topic', help='Topic to consume from', required=True)
-    parser.add_argument('-p', '--print_nth_msg', help='When running in a loop, print every nth msg.', required=False)
+    parser.add_argument('-t', '--topic', help='Topic to consume from.', required=True, metavar="")
+    parser.add_argument('-b', '--bootstrap', help='Bootstrap server. Defaults to localhost:9092.', required=False, metavar="")
+    parser.add_argument('-p', '--print_n_msg', help='Print every nth msg consumed. Defaults to every msg.', required=False, metavar="")
 
     
     args = parser.parse_args()
+    bootstrap = "localhost:9092" if args.bootstrap is None else args.bootstrap
     topic = args.topic
-    nthMsg = 1 if args.print_nth_msg is None else args.print_nth_msg
+    nthMsg = 1 if args.print_n_msg is None else args.print_n_msg
     
-    c = Consume(topic, nthMsg)
+    c = Consume(bootstrap, topic, nthMsg)
     
     c.intializeKafka()
 
